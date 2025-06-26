@@ -22,7 +22,7 @@ const isWindows = process.platform === "win32";
 const LATIN_HYPERCUBE_GENERATOR_EXECUTABLE = isWindows ? "lhc.exe" : "lhc";
 const LHC_DIRECTORY = "/lhc";
 
-const allowedOrigins = ["https://camburgaler.com", "http://localhost:3000"];
+const allowedOrigins = ["https://www.camburgaler.com", "http://localhost:3000"];
 
 function withCors(response: NextResponse, request: NextRequest): NextResponse {
     const origin =
