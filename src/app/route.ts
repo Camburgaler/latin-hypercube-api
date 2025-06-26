@@ -22,6 +22,20 @@ const isWindows = process.platform === "win32";
 const LATIN_HYPERCUBE_GENERATOR_EXECUTABLE = isWindows ? "lhc.exe" : "lhc";
 const LHC_DIRECTORY = "/lhc";
 
+const allowedOrigins = ["https://camburgaler.com", "http://localhost:3000"];
+
+function withCors(response: NextResponse, request: NextRequest): NextResponse {
+    const origin =
+        request.headers.get("Origin") ?? request.headers.get("origin");
+    if (origin && allowedOrigins.includes(origin)) {
+        response.headers.set("Access-Control-Allow-Origin", origin);
+    }
+
+    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+    return response;
+}
+
 function constructLhcArgs(args: LhcArgs): string[] {
     const lhcArgs: string[] = [];
 
@@ -134,36 +148,48 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // input validation for lhc args
     // number must be greater than 0
     if (body.number < 0) {
-        return NextResponse.json(
-            { message: "number must be greater than 0" },
-            { status: 400 }
+        return withCors(
+            NextResponse.json(
+                { message: "number must be greater than 0" },
+                { status: 400 }
+            ),
+            req
         );
     }
     // dimensions must be greater than 0
     if (body.dimensions < 0) {
-        return NextResponse.json(
-            { message: "dimensions must be greater than 0" },
-            { status: 400 }
+        return withCors(
+            NextResponse.json(
+                { message: "dimensions must be greater than 0" },
+                { status: 400 }
+            ),
+            req
         );
     }
     if (body.random && body.random[0]) {
         // random must not have a length longer than dimensions
         if (body.random.length > body.dimensions) {
-            return NextResponse.json(
-                {
-                    message:
-                        "random must not have a length longer than dimensions",
-                },
-                { status: 400 }
+            return withCors(
+                NextResponse.json(
+                    {
+                        message:
+                            "random must not have a length longer than dimensions",
+                    },
+                    { status: 400 }
+                ),
+                req
             );
         }
         for (const r of body.random) {
             // random must be between 0 and dimensions
             const rAsNumber = Number(r);
             if (rAsNumber < 0 || rAsNumber > body.dimensions) {
-                return NextResponse.json(
-                    { message: "random must be between 0 and dimensions" },
-                    { status: 400 }
+                return withCors(
+                    NextResponse.json(
+                        { message: "random must be between 0 and dimensions" },
+                        { status: 400 }
+                    ),
+                    req
                 );
             }
         }
@@ -171,21 +197,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (body.scales) {
         // scales must not have a length longer than dimensions
         if (Object.keys(body.scales).length > body.dimensions) {
-            return NextResponse.json(
-                {
-                    message:
-                        "scales must not have a length longer than dimensions",
-                },
-                { status: 400 }
+            return withCors(
+                NextResponse.json(
+                    {
+                        message:
+                            "scales must not have a length longer than dimensions",
+                    },
+                    { status: 400 }
+                ),
+                req
             );
         }
         for (const s of Object.keys(body.scales)) {
             // scales must be between 0 and dimensions
             const sAsNumber = Number(s);
             if (sAsNumber < 0 || sAsNumber > body.dimensions) {
-                return NextResponse.json(
-                    { message: "scales must be between 0 and dimensions" },
-                    { status: 400 }
+                return withCors(
+                    NextResponse.json(
+                        { message: "scales must be between 0 and dimensions" },
+                        { status: 400 }
+                    ),
+                    req
                 );
             }
         }
@@ -193,12 +225,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (body.column_headings) {
         // column_headings must have a length equal to dimensions
         if (body.column_headings.length !== body.dimensions) {
-            return NextResponse.json(
-                {
-                    message:
-                        "column_headings must have a length equal to dimensions",
-                },
-                { status: 400 }
+            return withCors(
+                NextResponse.json(
+                    {
+                        message:
+                            "column_headings must have a length equal to dimensions",
+                    },
+                    { status: 400 }
+                ),
+                req
             );
         }
     }
@@ -223,9 +258,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
 
     if (!lhcReleasesRes.ok) {
-        return NextResponse.json(
-            { message: "LHC Releases: " + lhcReleasesRes.statusText },
-            { status: lhcReleasesRes.status }
+        return withCors(
+            NextResponse.json(
+                { message: "LHC Releases: " + lhcReleasesRes.statusText },
+                { status: lhcReleasesRes.status }
+            ),
+            req
         );
     }
 
@@ -253,9 +291,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         await ensureExecutableDownloaded(lhcExecutableUrl, localExecutablePath);
     } catch (e) {
         const err = e as Error;
-        return NextResponse.json(
-            { error: `Download error: ${err.message}` },
-            { status: 500 }
+        return withCors(
+            NextResponse.json(
+                { error: `Download error: ${err.message}` },
+                { status: 500 }
+            ),
+            req
         );
     }
 
@@ -286,9 +327,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             console.error(err);
             cleanup();
             resolve(
-                NextResponse.json(
-                    { error: `Execution error: ${err.message}` },
-                    { status: 500 }
+                withCors(
+                    NextResponse.json(
+                        { error: `Execution error: ${err.message}` },
+                        { status: 500 }
+                    ),
+                    req
                 )
             );
         });
@@ -297,9 +341,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             if (code !== 0) {
                 cleanup();
                 return resolve(
-                    NextResponse.json(
-                        { error: `Exited with code ${code}` },
-                        { status: 500 }
+                    withCors(
+                        NextResponse.json(
+                            { error: `Exited with code ${code}` },
+                            { status: 500 }
+                        ),
+                        req
                     )
                 );
             }
@@ -309,19 +356,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
                 const csvContents = await fs.readFile(outputPath, "utf-8");
                 cleanup();
                 resolve(
-                    NextResponse.json({
-                        csv: csvContents,
-                        version: latestRelease,
-                    })
+                    withCors(
+                        NextResponse.json({
+                            csv: csvContents,
+                            version: latestRelease,
+                        }),
+                        req
+                    )
                 );
             } catch (e) {
                 const err = e as Error;
                 console.error(err);
                 cleanup();
                 resolve(
-                    NextResponse.json(
-                        { error: `Read error: ${err.message}` },
-                        { status: 500 }
+                    withCors(
+                        NextResponse.json(
+                            { error: `Read error: ${err.message}` },
+                            { status: 500 }
+                        ),
+                        req
                     )
                 );
             }
