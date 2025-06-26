@@ -18,7 +18,8 @@ import tmp from "tmp-promise";
 const GITHUB_METADATA_RELEASES_PATH = "/releases";
 const GITHUB_HOST = "https://github.com";
 const GITHUB_DOWNLOAD_PATH = "/download";
-const LATIN_HYPERCUBE_GENERATOR_EXECUTABLE = "lhc.exe";
+const isWindows = process.platform === "win32";
+const LATIN_HYPERCUBE_GENERATOR_EXECUTABLE = isWindows ? "lhc.exe" : "lhc";
 const LHC_DIRECTORY = "/lhc";
 
 function constructLhcArgs(args: LhcArgs): string[] {
@@ -89,7 +90,6 @@ async function ensureExecutableDownloaded(
     } catch {
         // Download and write the file
         const ghPat = process.env.GITHUB_PAT;
-        console.log(`Github PAT found: ${typeof ghPat !== "undefined"}`);
 
         console.log(`Downloading executable: ${executableUrl}`);
         const res = await fetch(
@@ -123,7 +123,7 @@ async function ensureExecutableDownloaded(
 
         // Make it executable
         console.log(`Making file executable: ${localExecutablePath}`);
-        await fs.chmod(localExecutablePath, 0o755);
+        await fs.chmod(localExecutablePath, fs.constants.S_IXUSR);
         await new Promise((resolve) => setTimeout(resolve, 1000)); // delay to release lock on file
     }
 }
