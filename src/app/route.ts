@@ -9,7 +9,7 @@ import {
     REPO_NAME_LATIN_HYPERCUBE_GENERATOR,
 } from "@camburgaler/latin-hypercube-shared";
 import { spawn } from "child_process";
-import { promises as fs } from "fs";
+import fsSync, { promises as fs } from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import os from "os";
 import path from "path";
@@ -121,7 +121,7 @@ async function ensureExecutableDownloaded(
 
         // Make it executable
         console.log(`Making file executable: ${localExecutablePath}`);
-        await fs.chmod(localExecutablePath, fs.constants.S_IXUSR);
+        await fsSync.chmodSync(localExecutablePath, 0o755);
         await new Promise((resolve) => setTimeout(resolve, 1000)); // delay to release lock on file
     }
 }
