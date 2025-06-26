@@ -71,8 +71,6 @@ function constructLhcArgs(args: LhcArgs): string[] {
         lhcArgs.push(args.column_headings.join(","));
     }
 
-    console.log(lhcArgs);
-
     return lhcArgs;
 }
 
@@ -263,13 +261,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return new Promise((resolve) => {
         // run executable with CLI args from request body
-        console.log("Running LHC: " + localExecutablePath);
+        console.log(
+            "Running LHC:",
+            localExecutablePath,
+            ...constructLhcArgs(body),
+            "--out-path",
+            outputPath
+        );
         const lhcProcess = spawn(
             localExecutablePath,
             [...constructLhcArgs(body), "--out-path", outputPath],
             {}
         );
 
+        lhcProcess.stdout.on("data", (data) => {
+            console.log(`stdout: ${data}`);
+        });
+
+        lhcProcess.stderr.on("data", (data) => {
+            console.error(`stderr: ${data}`);
+        });
         lhcProcess.on("error", (e) => {
             const err = e as Error;
             console.error(err);
@@ -281,7 +292,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
                 )
             );
         });
-
         lhcProcess.on("close", async (code) => {
             console.log(`LHC exited with code ${code}`);
             if (code !== 0) {
