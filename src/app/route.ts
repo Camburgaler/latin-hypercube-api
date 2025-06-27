@@ -5,6 +5,7 @@ import {
     GITHUB_METADATA_HOST,
     GITHUB_METADATA_REPOS_PATH,
     GITHUB_USERNAME,
+    LHC_VERSION,
     LhcArgs,
     REPO_NAME_LATIN_HYPERCUBE_GENERATOR,
 } from "@camburgaler/latin-hypercube-shared";
@@ -273,7 +274,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     >[];
 
     // get latest release
-    const latestRelease: string = lhcReleases[0].tag_name as string;
+    const latestRelease: string = lhcReleases.find(
+        (r: Record<string, unknown>) =>
+            (r.tag_name as string).startsWith(LHC_VERSION)
+    )!.tag_name as string;
     console.log("Latest LHC Release: " + latestRelease);
 
     // get asset
