@@ -79,8 +79,6 @@ function constructLhcArgs(args: LhcArgs): string[] {
         lhcArgs.push(scaleString);
     }
 
-    lhcArgs.push("--file-output");
-
     if (args.column_headings) {
         lhcArgs.push("--column-headings");
         lhcArgs.push(args.column_headings.join(","));
