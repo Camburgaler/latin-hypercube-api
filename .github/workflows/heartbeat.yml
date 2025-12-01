@@ -1,0 +1,14 @@
+name: Keep API Warm
+
+on:
+    schedule:
+        - cron: "*/10 * * * *" # every 10 minutes
+    workflow_dispatch: # lets you run it manually
+
+jobs:
+    keep_alive:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Ping Render API
+              run: |
+                  curl -s -o /dev/null -w "%{http_code}\n" https://latin-hypercube-api.onrender.com/liveness
